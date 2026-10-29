@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Такт — тренажер швидкого друку за субтитрами YouTube</title>
+<style>
+:root{--bg:#1a1c1e;--panel:#232629;--panel2:#2b2f33;--line:#3a3f44;--text:#e8eaec;--muted:#9aa1a8;--accent:#b6f23a;--accent-ink:#141800;--ok:#8fe36b;--bad:#ff6b6b;--r:14px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 "Segoe UI",Inter,system-ui,-apple-system,Roboto,sans-serif}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 20px 48px}
+header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 28px}
+.brand{font-weight:700;font-size:22px;letter-spacing:.02em}
+.brand i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--accent);margin-right:10px}
+.hidden{display:none!important}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+h1{font-size:clamp(28px,5vw,46px);line-height:1.12;margin:0 0 14px;max-width:18ch}
+.lead{color:var(--muted);max-width:56ch;margin:0 0 28px}
+form{display:flex;gap:10px;flex-wrap:wrap}
+label.sr{position:absolute;left:-9999px}
+input[type=text]{flex:1 1 300px;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+input[type=text]:focus{border-color:var(--accent)}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 18px;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover:not(:disabled){background:#c8ff4d}
+.fielderr{color:var(--bad);margin:10px 0 0;min-height:1.5em;font-size:14px}
+.how{margin-top:34px;display:grid;gap:12px;grid-template-columns:repeat(3,1fr);color:var(--muted);font-size:14px}
+.how div{border-left:2px solid var(--line);padding-left:12px}
+.how b{display:block;color:var(--text);font-weight:600}
+.center{text-align:center;padding:56px 24px}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);margin:0 auto 18px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:2.4s}*{transition:none!important}}
+.errbox h2{margin:0 0 10px;font-size:24px}
+.errbox p{color:var(--muted);max-width:52ch;margin:0 auto 22px}
+.trainer{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+.video{aspect-ratio:16/9;background:#000;border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+.video iframe,.video #player{width:100%;height:100%;display:block}
+.meta{color:var(--muted);font-size:13px;margin:10px 2px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat span{display:block;color:var(--muted);font-size:12px}
+.stat b{font-size:19px;font-variant-numeric:tabular-nums}
+.progress{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:0 0 16px}
+.progress div{height:100%;width:0;background:var(--accent);transition:width .25s}
+.status{color:var(--muted);font-size:14px;margin:0 0 10px;min-height:1.5em}
+.target{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px;font-size:clamp(20px,2.6vw,26px);line-height:1.6;min-height:7.5em;word-break:break-word;font-family:Georgia,"Times New Roman",serif}
+.target .c{color:var(--muted)}
+.target .c.ok{color:var(--ok)}
+.target .c.bad{color:#fff;background:rgba(255,107,107,.35);border-radius:3px}
+.target .c.cur{box-shadow:inset 0 -3px 0 var(--accent);color:var(--text)}
+.target.over{border-color:var(--bad)}
+.typebox{width:100%;margin-top:12px;font-size:18px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.res{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:20px 0}
+.res .stat b{font-size:26px}
+.foot{color:var(--muted);font-size:12.5px;margin-top:14px}
+@media (max-width:900px){.trainer{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.how{grid-template-columns:1fr}}
+@media (max-width:520px){.wrap{padding:14px 14px 40px}.card{padding:18px}.btn{flex:1 1 auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand"><i></i>Такт-бета</div></header>
+
+<!-- Landing -->
+<section id="viewHome" class="card">
+  <h1>Друкуйте українською швидше</h1>
+  <p class="lead">Вставте посилання на відео YouTube із субтитрами. Слухайте мовця й друкуйте текст субтитрів раніше, ніж з'явиться наступний фрагмент. Якщо ви не встигаєте, відео ставиться на паузу.</p>
+  <form id="urlForm" novalidate>
+    <label class="sr" for="urlInput">Посилання на відео YouTube</label>
+    <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" inputmode="url">
+    <button class="btn primary" type="submit">Завантажити відео</button>
+  </form>
+  <p class="fielderr" id="urlErr" role="alert"></p>
+  <div class="how">
+    <div><b>Відео й субтитри</b>Застосунок отримує субтитри відео, надаючи перевагу українським.</div>
+    <div><b>Друк синхронно з мовою</b>Поточний фрагмент підсвічується: правильні символи зелені, помилки червоні.</div>
+    <div><b>Пауза, якщо ви відстали</b>Відео чекає, доки ви правильно наберете фрагмент.</div>
+  </div>
+</section>
+
+<!-- Loading -->
+<section id="viewLoading" class="card center hidden" aria-live="polite">
+  <div class="spinner"></div><div id="loadingText">Завантаження відео та субтитрів…</div>
+</section>
+
+<!-- Error -->
+<section id="viewError" class="card center errbox hidden" role="alert">
+  <h2 id="errTitle">Не вдалося знайти субтитри</h2>
+  <p id="errText">На жаль, для цього відео немає доступних субтитрів або їх не вдалося завантажити. Спробуйте вставити посилання на інше відео YouTube із субтитрами.</p>
+  <button class="btn primary" id="retryBtn" type="button">Спробувати інше відео</button>
+</section>
+
+<!-- Trainer -->
+<section id="viewTrainer" class="hidden">
+  <div class="trainer">
+    <div>
+      <div class="video"><div id="player"></div></div>
+      <p class="meta" id="subMeta"></p>
+      <div class="stats" aria-label="Статистика">
+        <div class="stat"><span>Слів за хвилину</span><b id="sWpm">0</b></div>
+        <div class="stat"><span>Символів за хвилину</span><b id="sCpm">0</b></div>
+        <div class="stat"><span>Точність</span><b id="sAcc">100%</b></div>
+        <div class="stat"><span>Правильних символів</span><b id="sOk">0</b></div>
+        <div class="stat"><span>Помилок</span><b id="sErr">0</b></div>
+        <div class="stat"><span>Активний час</span><b id="sTime">0:00</b></div>
+        <div class="stat"><span>Фрагментів</span><b id="sSeg">0/0</b></div>
+        <div class="stat"><span>Прогрес</span><b id="sProg">0%</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progBar"><div id="progFill"></div></div>
+      <p class="status" id="statusLine" aria-live="polite"></p>
+      <div class="target" id="target" aria-label="Текст для набору"></div>
+      <label class="sr" for="typeInput">Введіть показаний текст</label>
+      <input type="text" class="typebox" id="typeInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" disabled placeholder="Друкуйте тут">
+      <div class="ctrls">
+        <button class="btn primary" id="startBtn" type="button">Почати тренування</button>
+        <button class="btn" id="pauseBtn" type="button" disabled>Пауза</button>
+        <button class="btn" id="repeatBtn" type="button" disabled>Повторити фрагмент</button>
+        <button class="btn" id="restartBtn" type="button" disabled>Перезапустити тренування</button>
+        <button class="btn" id="otherBtn" type="button">Інше відео</button>
+      </div>
+      <p class="foot">WPM = (правильні символи / 5) / активні хвилини. Точність = правильні натискання / усі натискання. Час на паузі не враховується.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Results -->
+<section id="viewResults" class="card hidden">
+  <h2 style="margin:0">Тренування завершено</h2>
+  <div class="res">
+    <div class="stat"><span>Швидкість</span><b id="rWpm"></b></div>
+    <div class="stat"><span>Точність</span><b id="rAcc"></b></div>
+    <div class="stat"><span>Тривалість</span><b id="rTime"></b></div>
+    <div class="stat"><span>Виконано фрагментів</span><b id="rSeg"></b></div>
+    <div class="stat"><span>Помилок</span><b id="rErr"></b></div>
+    <div class="stat"><span>Найкращий результат</span><b id="rBest"></b></div>
+  </div>
+  <div class="ctrls">
+    <button class="btn primary" id="againBtn" type="button">Почати знову</button>
+    <button class="btn" id="otherBtn2" type="button">Інше відео</button>
+  </div>
+</section>
+</div>
+
+<script>
+"use strict";
+// Backend base URL. Empty string = same origin (server.js serves this file).
+// For GitHub Pages set it to your deployed backend, e.g. "https://takt-api.example.com".
+const API_BASE = "";
+const MAX_SEG_CHARS = 70;
+const LEAD_SECONDS = 0.4;      // show segment slightly before its start
+const TICK_MS = 100;
+
+const $ = (id) => document.getElementById(id);
+const views = ["viewHome", "viewLoading", "viewError", "viewTrainer", "viewResults"];
+function show(name) { views.forEach((v) => $(v).classList.toggle("hidden", v !== name)); }
+
+/* ---------- URL parsing ---------- */
+function extractVideoId(raw) {
+  let s = String(raw || "").trim();
+  if (!s) return null;
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+  let u;
+  try { u = new URL(s); } catch (e) { return null; }
+  const host = u.hostname.replace(/^(www\.|m\.|music\.)/, "");
+  const ok = (id) => (/^[A-Za-z0-9_-]{11}$/.test(id || "") ? id : null);
+  if (host === "youtu.be") return ok(u.pathname.split("/")[1]);
+  if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    if (u.pathname === "/watch") return ok(u.searchParams.get("v"));
+    const m = u.pathname.match(/^\/(shorts|embed|v|live)\/([^/?]+)/);
+    if (m) return ok(m[2]);
+  }
+  return null;
+}
+
+/* ---------- Subtitle parsing ---------- */
+function decodeEntities(t) {
+  return t.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ");
+}
+function cleanText(t) {
+  t = decodeEntities(String(t).replace(/<[^>]*>/g, "").replace(/\{\\[^}]*\}/g, ""));
+  t = t.replace(/[’ʼ`]/g, "'").replace(/[\u00a0\u200b]/g, " ").replace(/\s+/g, " ").trim();
+  return t;
+}
+function toSeconds(ts) {
+  const m = ts.trim().replace(",", ".").match(/^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?)$/);
+  return m ? (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + parseFloat(m[3]) : NaN;
+}
+// Parses WebVTT or SRT text into [{start,end,text}]
+function parseTimedText(raw) {
+  const cues = [];
+  const blocks = String(raw).replace(/\r/g, "").split(/\n{2,}/);
+  for (const b of blocks) {
+    const lines = b.split("\n");
+    const i = lines.findIndex((l) => l.includes("-->"));
+    if (i < 0) continue;
+    const [a, rest] = lines[i].split("-->");
+    const start = toSeconds(a), end = toSeconds((rest || "").trim().split(/\s+/)[0] || "");
+    const text = cleanText(lines.slice(i + 1).join(" "));
+    if (isFinite(start) && isFinite(end) && text) cues.push({ start, end, text });
+  }
+  return cues;
+}
+// Cleans cues, drops sound notes like [Музика], splits long cues at word boundaries
+function buildSegments(cues) {
+  const out = [];
+  let last = "";
+  cues.slice().sort((a, b) => a.start - b.start).forEach((c) => {
+    // remove anything in square brackets, e.g. [Музика], [Andy]
+    const text = cleanText(String(c.text).replace(/\[[^\]]*\]/g, " "));
+    if (!text || /^\(.*\)$/.test(text) || text === last) return;
+    last = text;
+    const end = c.end > c.start ? c.end : c.start + 2;
+    const words = text.split(" ");
+    const parts = [];
+    let cur = "";
+    for (const w of words) {
+      if (cur && (cur + " " + w).length > MAX_SEG_CHARS) { parts.push(cur); cur = w; }
+      else cur = cur ? cur + " " + w : w;
+    }
+    if (cur) parts.push(cur);
+    let pos = c.start;
+    parts.forEach((p) => {
+      const dur = (end - c.start) * (p.length / text.length);
+      out.push({ text: p, start: pos, end: pos + dur, done: false });
+      pos += dur;
+    });
+  });
+  for (let i = 1; i < out.length; i++) if (out[i].start < out[i - 1].start) out[i].start = out[i - 1].start;
+  return out;
+}
+
+/* ---------- Subtitle retrieval ---------- */
+async function fetchSubtitles(videoId) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const res = await fetch(API_BASE + "/api/subtitles?v=" + encodeURIComponent(videoId), { signal: ctrl.signal });
+    let data = null;
+    try { data = await res.json(); } catch (e) { throw new Error("bad_json"); }
+    if (!res.ok) throw new Error(data && data.error ? data.error : "http_" + res.status);
+    let cues = Array.isArray(data.cues) ? data.cues : (data.vtt ? parseTimedText(data.vtt) : []);
+    const segments = buildSegments(cues);
+    if (!segments.length) throw new Error("empty_subtitles");
+    return { segments, lang: data.lang || "", name: data.name || "", auto: !!data.auto };
+  } finally { clearTimeout(timer); }
+}
+
+/* ---------- YouTube player ---------- */
+let ytApiPromise = null;
+function loadYouTubeApi() {
+  if (window.YT && window.YT.Player) return Promise.resolve();
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve, reject) => {
+    window.onYouTubeIframeAPIReady = resolve;
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    s.onerror = () => { ytApiPromise = null; reject(new Error("yt_api_load")); };
+    document.head.appendChild(s);
+    setTimeout(() => { if (!(window.YT && window.YT.Player)) { ytApiPromise = null; reject(new Error("yt_api_timeout")); } }, 15000);
+  });
+  return ytApiPromise;
+}
+let player = null, playerReady = null;
+function createPlayer(videoId) {
+  return loadYouTubeApi().then(() => new Promise((resolve, reject) => {
+    if (player && player.destroy) { try { player.destroy(); } catch (e) {} player = null; }
+    const holder = document.createElement("div");
+    holder.id = "player";
+    const old = $("player"); old.parentNode.replaceChild(holder, old);
+    player = new YT.Player("player", {
+      videoId, host: "https://www.youtube-nocookie.com",
+      playerVars: { playsinline: 1, rel: 0, modestbranding: 1, cc_load_policy: 0, disablekb: 0 },
+      events: {
+        onReady: () => resolve(),
+        onError: (e) => { const err = new Error("player_" + e.data); err.playerError = true; if (!state.ready) reject(err); else onPlayerFailure(e.data); },
+        onStateChange: onPlayerState
+      }
+    });
+  }));
+}
+
+/* ---------- Trainer state ---------- */
+const state = {
+  videoId: null, segs: [], idx: 0, ready: false,
+  running: false,        // training started and not finished
+  manualPaused: false,   // user pressed pause
+  autoPaused: false,     // paused because the user is behind
+  busy: false,           // guards overlapping player commands
+  segVisible: false,
+  okKeys: 0, errKeys: 0, doneChars: 0, curOk: 0, activeMs: 0, lastTick: 0, timer: null, prevVal: ""
+};
+const ELS = {};
+["target","typeInput","startBtn","pauseBtn","repeatBtn","restartBtn","statusLine","subMeta"].forEach((k) => ELS[k] = $(k));
+
+function fmtTime(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function setStatus(t) { ELS.statusLine.textContent = t; }
+function guard(fn) { // prevents overlapping play/pause commands
+  if (state.busy || !player) return;
+  state.busy = true; try { fn(); } catch (e) { console.error(e); }
+  setTimeout(() => { state.busy = false; }, 250);
+}
+function playVideo() { guard(() => player.playVideo()); }
+function pauseVideo() { guard(() => player.pauseVideo()); }
+
+function renderTarget() {
+  const seg = state.segs[state.idx];
+  const box = ELS.target;
+  box.textContent = "";
+  box.classList.remove("over");
+  if (!seg || !state.segVisible) { if (state.running) box.textContent = "Слухайте…"; return; }
+  for (const ch of seg.text) {
+    const s = document.createElement("span");
+    s.className = "c"; s.textContent = ch === " " ? "\u00a0" : ch;
+    box.appendChild(s);
+  }
+  paintTarget();
+}
+function paintTarget() {
+  const seg = state.segs[state.idx];
+  if (!seg || !state.segVisible) return;
+  const v = ELS.typeInput.value, chars = ELS.target.children, t = seg.text;
+  let prefixOk = true, ok = 0;
+  for (let i = 0; i < chars.length; i++) {
+    let cls = "c";
+    if (i < v.length) { if (prefixOk && v[i] === t[i]) { cls += " ok"; ok++; } else { cls += " bad"; prefixOk = false; } }
+    else if (i === v.length) cls += " cur";
+    chars[i].className = cls;
+  }
+  state.curOk = ok;
+  ELS.target.classList.toggle("over", v.length > t.length);
+}
+
+function updateStats() {
+  const mins = state.activeMs / 60000;
+  const correct = state.doneChars + state.curOk;
+  const cpm = mins > 0.01 ? correct / mins : 0;
+  const total = state.okKeys + state.errKeys;
+  const acc = total ? (state.okKeys / total) * 100 : 100;
+  const done = state.segs.filter((s) => s.done).length;
+  const prog = state.segs.length ? Math.round((done / state.segs.length) * 100) : 0;
+  $("sWpm").textContent = Math.round(cpm / 5);
+  $("sCpm").textContent = Math.round(cpm);
+  $("sAcc").textContent = acc.toFixed(1).replace(/\.0$/, "") + "%";
+  $("sOk").textContent = correct;
+  $("sErr").textContent = state.errKeys;
+  $("sTime").textContent = fmtTime(state.activeMs);
+  $("sSeg").textContent = done + "/" + state.segs.length;
+  $("sProg").textContent = prog + "%";
+  $("progFill").style.width = prog + "%";
+  $("progBar").setAttribute("aria-valuenow", prog);
+}
+
+function updateControls() {
+  const r = state.running;
+  ELS.startBtn.classList.toggle("hidden", r);
+  ELS.pauseBtn.disabled = !r;
+  ELS.pauseBtn.textContent = state.manualPaused ? "Продовжити" : "Пауза";
+  ELS.repeatBtn.disabled = !r || !state.segVisible;
+  ELS.restartBtn.disabled = !state.ready || (!r && state.idx === 0);
+  ELS.typeInput.disabled = !r || !state.segVisible || state.manualPaused;
+}
+
+/* ---------- Sync loop ---------- */
+function tick() {
+  if (!state.running || !player || !player.getCurrentTime) return;
+  const now = performance.now(), dt = now - state.lastTick; state.lastTick = now;
+  if (!state.manualPaused) { state.activeMs += dt; }
+  const seg = state.segs[state.idx];
+  if (!seg) return;
+  const t = player.getCurrentTime();
+  const visible = state.autoPaused || t >= seg.start - LEAD_SECONDS;
+  if (visible !== state.segVisible) {
+    state.segVisible = visible;
+    renderTarget(); updateControls();
+    if (visible && !state.manualPaused) ELS.typeInput.focus();
+  }
+  // deadline reached with unfinished text: pause once and wait (hysteresis via autoPaused flag)
+  if (!state.autoPaused && !state.manualPaused && state.segVisible && t >= seg.end) {
+    state.autoPaused = true;
+    pauseVideo();
+    setStatus("Відео на паузі. Закінчіть фрагмент, щоб продовжити.");
+  } else if (!state.autoPaused && !state.manualPaused) {
+    setStatus(state.segVisible ? "Друкуйте текст." : "Слухайте…");
+  }
+  updateStats();
+}
+
+function onPlayerState(e) {
+  if (!state.running) return;
+  if (e.data === YT.PlayerState.PAUSED && !state.autoPaused && !state.busy) { state.manualPaused = true; setStatus("Пауза."); updateControls(); }
+  if (e.data === YT.PlayerState.PLAYING && state.manualPaused) { state.manualPaused = false; state.lastTick = performance.now(); updateControls(); }
+}
+function onPlayerFailure(code) {
+  console.error("Player error", code);
+  stopLoop(); state.running = false;
+  showError("Не вдалося відтворити відео", "Це відео неможливо відтворити тут: власник міг заборонити вбудовування або відео недоступне. Спробуйте інше відео YouTube.");
+}
+
+/* ---------- Typing ---------- */
+ELS.typeInput.addEventListener("paste", (e) => e.preventDefault());
+ELS.typeInput.addEventListener("input", () => {
+  const seg = state.segs[state.idx];
+  if (!seg || !state.segVisible || !state.running) return;
+  const v = ELS.typeInput.value, prev = state.prevVal;
+  if (v.length > prev.length) {
+    for (let i = prev.length; i < v.length; i++) {
+      if (v.slice(0, i + 1) === seg.text.slice(0, i + 1)) state.okKeys++; else state.errKeys++;
+    }
+  }
+  state.prevVal = v;
+  paintTarget();
+  if (v === seg.text) completeSegment();
+  updateStats();
+});
+
+function completeSegment() {
+  const seg = state.segs[state.idx];
+  seg.done = true; state.doneChars += seg.text.length; state.curOk = 0;
+  ELS.typeInput.value = ""; state.prevVal = "";
+  state.idx++; state.segVisible = false;
+  if (state.idx >= state.segs.length) { finish(); return; }
+  const wasAuto = state.autoPaused;
+  state.autoPaused = false;
+  renderTarget(); updateControls();
+  const next = state.segs[state.idx];
+  if (wasAuto && !state.manualPaused) {
+    // resume from the exact paused position (no seek)
+    state.busy = false; playVideo();
+  }
+  const t = player.getCurrentTime();
+  state.segVisible = t >= next.start - LEAD_SECONDS;
+  renderTarget(); updateControls();
+  if (state.segVisible) ELS.typeInput.focus();
+  updateStats();
+}
+
+function finish() {
+  state.running = false; stopLoop();
+  try { player.pauseVideo(); } catch (e) {}
+  updateStats(); updateControls();
+  const mins = state.activeMs / 60000, total = state.okKeys + state.errKeys;
+  const wpm = mins > 0 ? Math.round((state.doneChars / 5) / mins) : 0;
+  const acc = total ? (state.okKeys / total) * 100 : 100;
+  let best = wpm;
+  try { best = Math.max(wpm, +localStorage.getItem("takt_best_wpm") || 0); localStorage.setItem("takt_best_wpm", String(best)); } catch (e) {}
+  $("rWpm").textContent = wpm + " сл/хв";
+  $("rAcc").textContent = acc.toFixed(1).replace(/\.0$/, "") + "%";
+  $("rTime").textContent = fmtTime(state.activeMs);
+  $("rSeg").textContent = state.segs.length;
+  $("rErr").textContent = state.errKeys;
+  $("rBest").textContent = best + " сл/хв";
+  show("viewResults");
+}
+
+/* ---------- Controls ---------- */
+function startLoop() { stopLoop(); state.lastTick = performance.now(); state.timer = setInterval(tick, TICK_MS); }
+function stopLoop() { if (state.timer) clearInterval(state.timer); state.timer = null; }
+
+function resetSession() {
+  stopLoop();
+  Object.assign(state, { idx: 0, running: false, manualPaused: false, autoPaused: false, busy: false, segVisible: false, okKeys: 0, errKeys: 0, doneChars: 0, curOk: 0, activeMs: 0, prevVal: "" });
+  state.segs.forEach((s) => s.done = false);
+  ELS.typeInput.value = "";
+  ELS.target.textContent = "Натисніть «Почати тренування».";
+  setStatus("Готово до старту."); updateStats(); updateControls();
+}
+ELS.startBtn.addEventListener("click", () => {
+  if (!state.ready) return;
+  state.running = true; state.manualPaused = false; state.autoPaused = false; state.busy = false;
+  const first = state.segs[0];
+  try { player.seekTo(Math.max(0, first.start - 2), true); player.playVideo(); } catch (e) { console.error(e); }
+  state.lastTick = performance.now();
+  renderTarget(); updateControls(); startLoop(); setStatus("Слухайте…");
+});
+ELS.pauseBtn.addEventListener("click", () => {
+  if (!state.running) return;
+  state.busy = false;
+  if (state.manualPaused) {
+    state.manualPaused = false; state.lastTick = performance.now();
+    if (!state.autoPaused) playVideo(); // if waiting on a segment, video resumes only after completion
+    setStatus(state.autoPaused ? "Закінчіть фрагмент, щоб продовжити." : "Друкуйте текст.");
+  } else {
+    state.manualPaused = true; if (!state.autoPaused) pauseVideo(); setStatus("Пауза.");
+  }
+  updateControls();
+  if (!state.manualPaused && state.segVisible) ELS.typeInput.focus();
+});
+ELS.repeatBtn.addEventListener("click", () => {
+  const seg = state.segs[state.idx]; if (!seg || !state.running) return;
+  ELS.typeInput.value = ""; state.prevVal = ""; state.curOk = 0;
+  state.autoPaused = false; state.manualPaused = false; state.busy = false;
+  try { player.seekTo(Math.max(0, seg.start - 0.5), true); player.playVideo(); } catch (e) { console.error(e); }
+  state.segVisible = false; renderTarget(); updateControls(); state.lastTick = performance.now();
+});
+ELS.restartBtn.addEventListener("click", restart);
+function restart() {
+  resetSession();
+  try { player.pauseVideo(); player.seekTo(Math.max(0, state.segs[0].start - 2), true); } catch (e) {}
+  show("viewTrainer");
+}
+$("againBtn").addEventListener("click", restart);
+function backHome() {
+  stopLoop(); state.running = false; state.ready = false;
+  if (player && player.destroy) { try { player.destroy(); } catch (e) {} player = null; }
+  const h = document.createElement("div"); h.id = "player";
+  const old = document.querySelector(".video"); old.textContent = ""; old.appendChild(h);
+  show("viewHome"); $("urlInput").focus();
+}
+$("otherBtn").addEventListener("click", backHome);
+$("otherBtn2").addEventListener("click", backHome);
+$("retryBtn").addEventListener("click", backHome);
+
+function showError(title, text) { $("errTitle").textContent = title; $("errText").textContent = text; show("viewError"); }
+const NO_SUBS = ["Не вдалося знайти субтитри", "На жаль, для цього відео немає доступних субтитрів або їх не вдалося завантажити. Спробуйте вставити посилання на інше відео YouTube із субтитрами."];
+
+/* ---------- Load flow ---------- */
+$("urlForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const id = extractVideoId($("urlInput").value);
+  if (!id) { $("urlErr").textContent = "Це не схоже на посилання YouTube. Вставте адресу виду youtube.com/watch?v=…, youtu.be/… або youtube.com/shorts/…"; return; }
+  $("urlErr").textContent = "";
+  state.ready = false; state.videoId = id;
+  show("viewLoading");
+  // 1) subtitles first: training never starts without them
+  let subs;
+  try { subs = await fetchSubtitles(id); }
+  catch (err) { console.error("Subtitle error:", err && err.message); showError(NO_SUBS[0], NO_SUBS[1]); return; }
+  // 2) player
+  show("viewTrainer");
+  try { await createPlayer(id); }
+  catch (err) {
+    console.error("Player error:", err && err.message);
+    showError("Не вдалося завантажити відео", "Це відео неможливо вбудувати або завантажити плеєр YouTube. Спробуйте інше відео.");
+    return;
+  }
+  state.segs = subs.segments; state.ready = true;
+  ELS.subMeta.textContent = "Мова субтитрів: " + (subs.name || subs.lang || "невідома") + (subs.auto ? " (автоматичні)" : "") + (subs.lang && !/^uk/i.test(subs.lang) ? ". Українських субтитрів немає." : "");
+  resetSession();
+  ELS.startBtn.focus();
+});
+</script>
+</body>
+</html>
